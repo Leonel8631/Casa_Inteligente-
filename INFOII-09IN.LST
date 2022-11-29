@@ -1,0 +1,246 @@
+C51 COMPILER V9.03   INFOII_09IN                                                           02/06/2013 19:00:52 PAGE 1   
+
+
+C51 COMPILER V9.03, COMPILATION OF MODULE INFOII_09IN
+OBJECT MODULE PLACED IN INFOII-09IN.OBJ
+COMPILER INVOKED BY: C:\Keil\C51\BIN\C51.EXE INFOII-09IN.c LARGE BROWSE DEBUG OBJECTEXTEND
+
+line level    source
+
+   1          // =========================================================================================
+   2          //  Módulo: INFOII-09IN.C                                                         
+   3          //  Propósito: funciones de inicializacion o configuracion del F020                                 
+   4          //  Módulo componente de: INFOII-09
+   5          //  Fecha: 01-05-09
+   6          //  Autor: Ing. Gustavo Fresno
+   7          //  Tema : Inicializacion
+   8          // =========================================================================================
+   9          
+  10          #include <INFOII.h>
+  11          
+  12          //------------------------------------------------------------------------------------
+  13          // PORT_Init
+  14          //------------------------------------------------------------------------------------
+  15          void PORT_Init(void)
+  16          {
+  17   1      #ifdef F120
+                      char SFRPAGE_SAVE = SFRPAGE;    // Save Current SFR page
+                      SFRPAGE = CONFIG_PAGE;                  // Switch to configuration page
+              #endif
+  21   1                                                                              //                                                                              76543210
+  22   1              XBR0 = 0x04;                                    // Enable UART0 y el                                    00000110
+  23   1              XBR1 = 0x14;                                    // Enable /INT0 E /INT1                                 00010100
+  24   1              XBR2 = 0xC4;                                    // Enable crossbar, UART1                               01000100
+  25   1                                                                              // and weak pull-ups globally enable
+  26   1              
+  27   1      ////  Port Output Mode Register (Open Drain or Push Pull)
+  28   1              P0MDOUT = 0x00;                           
+  29   1              P1MDOUT = 0x0f;      
+  30   1              P2MDOUT = 0x00;      
+  31   1              P3MDOUT = 0x00;
+  32   1      //      P5MDOUT = 0XF0;     
+  33   1              P74OUT = 0xcb;                                  // Configuro el puerto 5 como push-pull el 
+  34   1                                                                              // nibble alto y open-drain el nibble bajo
+  35   1      //      XBR0 = 0x04;                                    // Habilito UART0                                               00000100
+  36   1      //      XBR1 = 0x00;                                    // Todo dehabilitado                                    00000000
+  37   1      //      XBR2 = 0x44;                                    // Habilito crossbar y UART1                    01000100
+  38   1      //                                                                      // Habilito pull-up
+  39   1      //
+  40   1      ////  Port Output Mode Register (Open Drain or Push Pull)
+  41   1      ////    P74OUT = 0x08;                                  // Configuro el puerto 5 como push-pull el 
+  42   1      ////                                                                    // nibble alto y open-drain el nibble bajo
+  43   1      ////
+  44   1      //      P1MDOUT = 0x5f;                                 // Configuro los pines del display como push-pull
+  45   1      //      P2MDOUT = 0xff; 
+  46   1      //
+  47   1      //      P5 = 0x0f;
+  48   1      }
+  49          
+  50          #ifdef F120
+              void SYSCLK_Crystal_Init(void)
+              {
+                      unsigned int xdata i;                           // delay counter
+              
+                      char SFRPAGE_SAVE = SFRPAGE;            // Save Current SFR page
+C51 COMPILER V9.03   INFOII_09IN                                                           02/06/2013 19:00:52 PAGE 2   
+
+              
+                      SFRPAGE = CONFIG_PAGE;                          // Set SFR Page
+                      
+                      OSCXCN = 0x67;                                          // start external oscillator with
+                                                                                              // 11.0592MHz crystal (XFCN = 7)
+                      for (i = 0 ; i < 256 ; i++);            // XTLVLD blanking interval (>1ms)
+                      
+                      while (!(OSCXCN & 0x80));                       // Wait for crystal osc. to settle
+                      
+                      SFRPAGE = LEGACY_PAGE;
+                      RSTSRC = 0x06;                                          // enable missing clock detector, y el supervisor de tencion
+                      SFRPAGE = CONFIG_PAGE;
+                      CLKSEL = 0x01;                                          // select external oscillator as SYSCLK
+                                                                                              // source
+                      OSCICN = 0x00;                                          // disable internal oscillator
+                      
+                      SFRPAGE = SFRPAGE_SAVE;                         // Restore SFR page
+              }
+              #else
+  75          void SYSCLK_Crystal_Init(void)
+  76          {
+  77   1              unsigned int i;                                         // Variable local
+  78   1              
+  79   1              OSCXCN = 0x67;                                          // Configuro el registro de control del oscilador 
+  80   1                                                                                      // 01100111
+  81   1                                                                                      // Habilito el oscilador para funcionar con cristal (22.1184MHz)
+  82   1                                                                                      // Configuro el rango de trabajo del oscilador
+  83   1              
+  84   1              for (i=0; i < 256; i++);                        // Demora "Cuidado esta demora (bloqueante) se puede hacer porque 
+  85   1                                                                                      // estoy en la inicializacion y no bloqueo ningun otro proceso!!!!
+  86   1                                                                                      // Hay que hacer esta demora para que se estabilice el oscilador
+  87   1      
+  88   1              while (!(OSCXCN & 0x80));                       // Espero hasta que se estabilice (Cuidado es bloqueante!!)
+  89   1      
+  90   1              OSCICN = 0x88;                                          // Configuro el oscilador interno
+  91   1                                                                                      // 10001000
+  92   1                                                                                      // Configuro el micro para utilizar el oscilador externo
+  93   1      
+  94   1              while (!(OSCXCN & 0x80));                       // Espero hasta que se estabilice (Cuidado es bloqueante!!)
+  95   1      
+  96   1              OSCICN = 0x08;                                          // Configuro el oscilador interno
+  97   1                                                                                      // 00001000
+  98   1                                                                                      // Configuro el micro para utilizar el oscilador externo
+  99   1      }
+ 100          #endif
+ 101          //-----------------------------------------------------------------------------
+ 102          // SYSPLL_Init
+ 103          //-----------------------------------------------------------------------------
+ 104          // This routine initializes the system PLL to use an 11.0592 MHz crystal
+ 105          // as its clock source. Pasamos del Clock externo al PLL
+ 106          // ----------------------------------------------------------------------------
+ 107          #ifdef F120
+              void Init_PLL(void)
+              {
+                      char xdata i;                   // delay counter
+                      char SFRPAGE_SAVE = SFRPAGE;    // Save Current SFR page
+              
+              // Estos pasos son asi, estan explicados en las HD
+              
+                      SFRPAGE = CONFIG_PAGE;                  // Set SFR Page
+                      PLL0CN = 0x04;                                  // 2- PLLSRC   (Page = F )
+                      SFRPAGE = LEGACY_PAGE;
+C51 COMPILER V9.03   INFOII_09IN                                                           02/06/2013 19:00:52 PAGE 3   
+
+                      FLSCL = 0x20;                                   // 3- FLRT     (Page = 0 )
+                      SFRPAGE = CONFIG_PAGE;
+                      PLL0CN = 0x05;                                  // 4- PLLPWR   (Page = F )
+              
+                      PLL0DIV = 0x01;
+                      PLL0FLT = 0x37;
+                      PLL0MUL = 0x01;
+                      
+                      for (i = 0 ; i < 5 ; i++);              // blanking interval (>5us)
+              
+                      while (!(PLL0CN && 0x10));              // PLLCK Wait for PLL. to settle
+                      
+                      PLL0CN = PLL0CN | 0x02;                 // 2- PLLEN (Page = F )
+                      CLKSEL = 0x32;                                  // select PLL as SYSCLK source (Page =  F)
+                      SFRPAGE = SFRPAGE_SAVE;                 // Restore SFR page
+              }
+              #endif
+ 135          
+ 136          //------------------------------------------------------------------------------------
+ 137          // Esta funcion resetea el microcontrolador
+ 138          //------------------------------------------------------------------------------------
+ 139          /*void Resetear(void)
+ 140          {
+ 141                  RSTSRC |= 0x01;                                         // HW Reset
+ 142          }
+ 143            */
+ 144          //////////////////////////////////////////////////////////////////////////////////////////////////////////
+             -/////////////////////////////////////////////////////////////////////////////////////////////
+ 145          //*     Propósito: Inicialización de Hardware en el arranque del programa
+ 146          //*     Parámetros: void
+ 147          //*     Retorna: void
+ 148          //////////////////////////////////////////////////////////////////////////////////////////////////////////
+             -////////////////////////////////////////////////////////////////////////////////////////////
+ 149          void Inicializacion(void)
+ 150          {
+ 151   1              WDTCN = 0xDE;                       // Deshabilito el watchdog timer
+ 152   1              WDTCN = 0xAD;
+ 153   1               
+ 154   1              SYSCLK_Crystal_Init();                  // Configuro el Oscilador
+ 155   1      #ifdef F120
+                      Init_PLL();                                                     // Cambio el PLL 
+              #endif
+ 158   1              P7=0X10;
+ 159   1      
+ 160   1              PORT_Init();                                            // Configuro los puertos
+ 161   1      
+ 162   1              Inicializacion_Timer();                         // Configuro los timers
+ 163   1              TIMERS_Inicializar();
+ 164   1      }
+ 165          
+ 166          //------------------------------------------------------------------------------------
+ 167          // Esta funcion configura el temporizador 0 para utilizarse como base de tiempo
+ 168          //------------------------------------------------------------------------------------
+ 169          void Inicializacion_Timer(void)
+ 170          {
+ 171   1      #ifdef F120
+                      char SFRPAGE_SAVE = SFRPAGE;    // Save Current SFR page
+                      SFRPAGE = TIMER01_PAGE;
+              #endif
+ 175   1      
+ 176   1              EA = 0;                                                         // Deshabilito todo por las dudas
+ 177   1      
+C51 COMPILER V9.03   INFOII_09IN                                                           02/06/2013 19:00:52 PAGE 4   
+
+ 178   1      //------------------ TIMER 0 -----------------------------------
+ 179   1      // Timer 0:     
+ 180   1      //                                                SYSCLK
+ 181   1      //                      Cuenta =    ___________
+ 182   1      //                                      (65536-Tn)
+ 183   1      //
+ 184   1      //                      Cuenta = tiempo que quiero contar. ej 2500 Hz
+ 185   1      //
+ 186   1      //                      SYSCLK = Xtal
+ 187   1      //--------------------------------------------------------------
+ 188   1      
+ 189   1      
+ 190   1              TH0 = t_2500Hz_H;                               // 2500Hz
+ 191   1              TL0 = t_2500Hz_L;                               // Xtal 22MHz
+ 192   1              TMOD = 0x01;                                    // Configuro el modo 1 de funcionamiento para el timer 0
+ 193   1              CKCON = 0;                                      // Configuro el divisor del clock
+ 194   1              
+ 195   1              TR0 = 1;
+ 196   1              ET0=1;                                          // Es un bit de TCON, Habilito el timer 0 para muestrar en tiempo
+ 197   1              TF0 = 0;
+ 198   1      //--------------------------------------------------------------
+ 199   1      
+ 200   1      //------------------ TIMER 1 -----------------------------------
+ 201   1              TH1 = -(SYSCLK/BAUDRATE/16);    // set Timer1 reload value for baudrate
+ 202   1              TR1 = 1;                        // start Timer1
+ 203   1              ET1 = 0;                                                // Deshabilito la interrupcion timer 1
+ 204   1              TF1 = 0;
+ 205   1      //--------------------------------------------------------------
+ 206   1      
+ 207   1              EA = 1;                                                 // Habilito todas las interrupciones
+ 208   1      
+ 209   1      #ifdef F120
+                      SFRPAGE = SFRPAGE_SAVE;
+              #endif
+ 212   1      }
+ 213          
+ 214          
+ 215          
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    112    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =   ----    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

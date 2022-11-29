@@ -1,0 +1,79 @@
+C51 COMPILER V9.03   TECLADOHW                                                             02/06/2013 19:00:53 PAGE 1   
+
+
+C51 COMPILER V9.03, COMPILATION OF MODULE TECLADOHW
+OBJECT MODULE PLACED IN TECLADOHW.OBJ
+COMPILER INVOKED BY: C:\Keil\C51\BIN\C51.EXE TECLADOHW.C LARGE BROWSE DEBUG OBJECTEXTEND
+
+line level    source
+
+   1          #include "INFOII.H"
+   2          
+   3          unsigned char BoardHW (void)
+   4          {
+   5   1              TECLADO_FILA_1 = 0;
+   6   1              TECLADO_FILA_2 = 1;
+   7   1              TECLADO_FILA_3 = 1;
+   8   1              TECLADO_FILA_4 = 1;
+   9   1              if (TECLADO_COLUMNA_1 == 0)
+  10   1                      return TECLA_9;//
+  11   1              if (TECLADO_COLUMNA_2 == 0)
+  12   1                      return TECLA_NUMERAL;//
+  13   1              if (TECLADO_COLUMNA_3 == 0)
+  14   1                      return TECLA_3;
+  15   1              if (TECLADO_COLUMNA_4 == 0)
+  16   1                      return TECLA_6;//
+  17   1              TECLADO_FILA_1 = 1;
+  18   1              TECLADO_FILA_2 = 0;
+  19   1              TECLADO_FILA_3 = 1;
+  20   1              TECLADO_FILA_4 = 1;
+  21   1              if (TECLADO_COLUMNA_1 == 0)
+  22   1                      return TECLA_F3;//
+  23   1              if (TECLADO_COLUMNA_2 == 0)
+  24   1                      return TECLA_F4;//
+  25   1              if (TECLADO_COLUMNA_3 == 0)
+  26   1                      return TECLA_F1;//
+  27   1              if (TECLADO_COLUMNA_4 == 0)
+  28   1                      return TECLA_F2; //
+  29   1              TECLADO_FILA_1 = 1;
+  30   1              TECLADO_FILA_2 = 1;
+  31   1              TECLADO_FILA_3 = 0;
+  32   1              TECLADO_FILA_4 = 1;
+  33   1              if (TECLADO_COLUMNA_1 == 0)
+  34   1                      return TECLA_7; //
+  35   1              if (TECLADO_COLUMNA_2 == 0)
+  36   1                      return TECLA_ASTERISCO; //
+  37   1              if (TECLADO_COLUMNA_3 == 0)
+  38   1                      return TECLA_1;//
+  39   1              if (TECLADO_COLUMNA_4 == 0)
+  40   1                      return TECLA_4;//
+  41   1              TECLADO_FILA_1 = 1;
+  42   1              TECLADO_FILA_2 = 1;
+  43   1              TECLADO_FILA_3 = 1;
+  44   1              TECLADO_FILA_4 = 0;
+  45   1              if (TECLADO_COLUMNA_1 == 0)
+  46   1                      return TECLA_8;//
+  47   1              if (TECLADO_COLUMNA_2 == 0)
+  48   1                      return TECLA_0;
+  49   1              if (TECLADO_COLUMNA_3 == 0)
+  50   1                      return TECLA_2;
+  51   1              if (TECLADO_COLUMNA_4 == 0)
+  52   1                      return TECLA_5; 
+  53   1              return NO_KEY;
+  54   1      }
+
+C51 COMPILER V9.03   TECLADOHW                                                             02/06/2013 19:00:53 PAGE 2   
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    131    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =   ----    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

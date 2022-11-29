@@ -1,0 +1,33 @@
+C51 COMPILER V9.03   TECLADOPR                                                             02/06/2013 19:00:53 PAGE 1   
+
+
+C51 COMPILER V9.03, COMPILATION OF MODULE TECLADOPR
+OBJECT MODULE PLACED IN TECLADOPR.OBJ
+COMPILER INVOKED BY: C:\Keil\C51\BIN\C51.EXE TECLADOPR.C LARGE BROWSE DEBUG OBJECTEXTEND
+
+line level    source
+
+   1          #include "INFOII.H"
+   2          
+   3          void Board(void)
+   4          {
+   5   1              unsigned char CodigoActual ;
+   6   1              
+   7   1              CodigoActual = BoardHW( );                                                                      // Se Compromete con el HW
+   8   1              //key = CodigoActual;
+   9   1              BoardSW( CodigoActual );                                                                                //  No se compromete con el HW
+  10   1      }
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =      6    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =   ----    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

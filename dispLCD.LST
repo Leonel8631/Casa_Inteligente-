@@ -1,0 +1,184 @@
+C51 COMPILER V9.03   DISPLCD                                                               02/06/2013 19:00:54 PAGE 1   
+
+
+C51 COMPILER V9.03, COMPILATION OF MODULE DISPLCD
+OBJECT MODULE PLACED IN dispLCD.OBJ
+COMPILER INVOKED BY: C:\Keil\C51\BIN\C51.EXE dispLCD.c LARGE BROWSE DEBUG OBJECTEXTEND
+
+line level    source
+
+   1          #include "INFOII.h"
+   2          
+   3          /*
+   4          COMANDO                                                                 RS      RW      D7      D6      D5      D4      D3      D2      D1      D0      TIEMPO DE EJECUCIÓN
+   5          Borrar el visualizador                                  0       0       0       0       0       0       0       0       0       1       1.64mS
+   6          Poner el cursor al inicio                               0       0       0       0       0       0       0       0       1       x       1.64mS
+   7          Modo de entrada                                                 0       0       0       0       0       0       0       1       I/D     S       40uS
+   8          Activar/desactivar el visualizador              0       0       0       0       0       0       1       D       U       B       40uS
+   9          Desplazar el cursor/visualizador                0       0       0       0       0       1       D/C     R/L     x       x       40uS
+  10          Modo de funcionamiento                                  0       0       0       0       1       DL      N       F       x       x       40uS
+  11          Establecer la dirección CGRAM                   0       0       0       1       Dirección CGRAM 40uS
+  12          Establecer la dirección DDRAM                   0       0       1       Dirección CGRAM 40uS
+  13          Leer la bandera "BUSY"(ocupado) (BF)    0       1       BF      Dirección CGRAM -
+  14          Escribir en la CGRAM o en la DDRAM              1       0       D7      D6      D5      D4      D3      D2      D1      D0      40uS
+  15          Leer la CGRAM o la DDRAM                                1       1       D7      D6      D5      D4      D3      D2      D1      D0      40uS
+  16          I/D 1 = Incremento (por 1)                           R/L 1 = Desplazamiento a la derecha
+  17              0 = Decremento (por 1)                               0 = Desplazamiento a la izquierda
+  18              
+  19          S 1 = Desplazamiento del visualizador activado        DL 1 = Bus de datos de 8 bits
+  20            0 = Desplazamiento del visualizador desactivado        0 = Bus de datos de 4 bits
+  21            
+  22          D 1 = Visualizador encendido                           N 1 = Visualizador de dos líneas
+  23            0 = Visualizador apagado                               0 = Visualizador en una línea
+  24            
+  25          U 1 = Cursor activado                                  F 1 = Carácter de 5x10 puntos
+  26            0 = Cursor desactivado                                 0 = Carácter de 5x7 puntos
+  27          
+  28          B 1 = Parpadeo del cursor encendido                  D/C 1 = Desplazamiento del visualizador
+  29            0 = Parpadeo del cursor apagado                        0 = Desplazamiento del cursor
+  30          
+  31          */
+  32           
+  33          //--------------------------------------------------------------------------//
+  34          //---PRIMITIVAS-------------------------------------------------------------//
+  35          void DISPLAYLCD(unsigned char *texto, unsigned char cantidad, bit reglon,unsigned char posicion)
+  36          {   
+  37   1      
+  38   1              unsigned char i;
+  39   1      
+  40   1              //Inic_LCD();
+  41   1              if(reglon==0)
+  42   1                      Escribir8(COMANDO,0x80+posicion);
+  43   1              else
+  44   1                      Escribir8(COMANDO,0x80+0x40+posicion);//posicion inicial + segunda linea + posicion
+  45   1          for(i=0;i<cantidad;i++)
+  46   1          {
+  47   2              Escribir8(DATO,texto[i]);
+  48   2          }
+  49   1      
+  50   1      }
+  51          
+  52          /*void DISPLAYLCD_NUMERO(unsigned int numero, unsigned char cifras,bit reglon,unsigned char posicion)
+  53          {   unsigned char d;
+  54              unsigned char temp[5];
+  55              if(reglon==0)
+C51 COMPILER V9.03   DISPLCD                                                               02/06/2013 19:00:54 PAGE 2   
+
+  56                          Escribir8(COMANDO,0x80+posicion);
+  57                  else
+  58                          Escribir8(COMANDO,0x80+0x40+posicion);//posicion inicial + segunda linea + posicion
+  59          
+  60                  for(d=0;d<cifras;d++)
+  61              {
+  62                          if(d==2)
+  63                                  temp[2]='.';
+  64                          else
+  65                  {       temp[d]=numero%10 + '0';
+  66                          numero/=10;
+  67                          }
+  68              }
+  69              for(d=cifras;d>0;d--)
+  70              {
+  71                  Escribir8(DATO,temp[d-1]);
+  72              }
+  73          }*/      
+  74          //--------------------------------------------------------------------------------------------------------
+             ---------------------------------------------------------------------------------------
+  75          //      Nombre de la función: void ini_LCD(void)
+  76          //      Proposito:inicializa el display 
+  77          //      Parametros:void                                                                                 
+  78          //      Retorna: void.                                                         
+  79          //--------------------------------------------------------------------------------------------------------
+             ---------------------------------------------------------------------------------------
+  80           
+  81          void IniC_LCD (void)
+  82                  
+  83          {               
+  84   1              unsigned char i,j;
+  85   1      
+  86   1              for(i=0;i<3;i++)
+  87   1              {
+  88   2                      E_OFF;  
+  89   2              P6=0X3C;// LCD_INIC;
+  90   2                              delay();//rutina de retardo fija de 30 mseg
+  91   2              RS_OFF; //instruccion
+  92   2              E_ON;
+  93   2                      for(j=3;j;j--);
+  94   2              E_OFF;
+  95   2        }
+  96   1      
+  97   1        //control_LCD(LCD_DATO);//veo el BF
+  98   1        Escribir8(COMANDO,0x3F);// 
+  99   1        Escribir8(COMANDO,0X01);//HAGO UN clrscr().Se podría haber usado la macro que creamos
+ 100   1                          //llamada clrscr()
+ 101   1        Escribir8(COMANDO,0x08);//display OFF
+ 102   1        Escribir8(COMANDO,0X01);// clear display
+ 103   1        Escribir8(COMANDO,0x0C);//display ON,sin cursor y blinking OFF del cursor                     
+ 104   1        Escribir8(COMANDO,0X06);//programo el LCD para mis necesidades
+ 105   1      
+ 106   1      }
+ 107                                
+ 108          
+ 109          //--------------------------------------------------------------------------------------------------------
+             ---------------------------------------------------------------------------------------
+ 110          //      Nombre de la función: void delay(void)
+ 111          //      Proposito:retardo fijo de 30 mseg 
+ 112          //      Parametros:void                                                                                 
+ 113          //      Retorna: void.                                                         
+ 114          //--------------------------------------------------------------------------------------------------------
+C51 COMPILER V9.03   DISPLCD                                                               02/06/2013 19:00:54 PAGE 3   
+
+             ---------------------------------------------------------------------------------------
+ 115          void delay(void)
+ 116          {
+ 117   1               unsigned int i;
+ 118   1               for (i=0;i<35000;i++);
+ 119   1      }
+ 120          void delay2(void)
+ 121          {
+ 122   1               unsigned int i;
+ 123   1               for (i=0;i<5000;i++);
+ 124   1      }  
+ 125          
+ 126          //--------------------------------------------------------------------------//
+ 127          //--------------------------------------------------------------------------//
+ 128          
+ 129          //---DRIVER-----------------------------------------------------------------//  
+ 130          //--------------------------------------------------------------------------//
+ 131          void Escribir8(bit opcion,unsigned char dato)//Comunicacion 8 bits
+ 132          {
+ 133   1      
+ 134   1          if(opcion==COMANDO)
+ 135   1              {       RS_OFF; //CONFLCD=(CONFLCD&(0x3f));     //RS=0 Registro de Control
+ 136   2              //RW=0;//Escritura
+ 137   2              E_ON;   //CONFLCD=(CONFLCD&(0x3f))|(0x40);      //Modulo conectado E=1
+ 138   2                      P_DATOS=dato;
+ 139   2                      delay2();
+ 140   2              E_OFF;  //CONFLCD=(CONFLCD&(0x3f));//Modulo desconectado E=0
+ 141   2              }
+ 142   1              else
+ 143   1              {       RS_ON;  //CONFLCD=(CONFLCD&(0x3f))|(0x80);      //RS=1 Registro de Datos
+ 144   2              //RW=0;//Escritura
+ 145   2              E_ON;   //CONFLCD=(CONFLCD&(0x3f))|(0x40);      //Modulo conectado E=1
+ 146   2                      P_DATOS=dato;
+ 147   2                      delay2();
+ 148   2              E_OFF;  //CONFLCD=(CONFLCD&(0x3f));     //Modulo desconectado E=0
+ 149   2              }
+ 150   1      
+ 151   1      }  
+ 152          //--------------------------------------------------------------------------//
+ 153          //--------------------------------------------------------------------------//
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    270    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =   ----      10
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =   ----    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----       2
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

@@ -1,0 +1,66 @@
+C51 COMPILER V9.03   TECLADOSW                                                             02/06/2013 19:00:53 PAGE 1   
+
+
+C51 COMPILER V9.03, COMPILATION OF MODULE TECLADOSW
+OBJECT MODULE PLACED IN TECLADOSW.OBJ
+COMPILER INVOKED BY: C:\Keil\C51\BIN\C51.EXE TECLADOSW.C LARGE BROWSE DEBUG OBJECTEXTEND
+
+line level    source
+
+   1          #include "INFOII.H"
+   2          
+   3          unsigned char key;
+   4          
+   5          void BoardSW( unsigned char CodigoActual )
+   6          {
+   7   1              // Se definen estaticas para encapsular el codigo
+   8   1              static unsigned char CodigoAnterior = NO_KEY;
+   9   1              static unsigned char EstadosEstables;
+  10   1      
+  11   1      
+  12   1              if( CodigoActual == NO_KEY )                                                            // No hay tecla presionada o hubo un rebote
+  13   1              {
+  14   2                      CodigoAnterior = NO_KEY;
+  15   2                      EstadosEstables = 0;
+  16   2                      return;
+  17   2              }
+  18   1      
+  19   1              if( EstadosEstables == 0  )                                                                             // Se detecto una tecla por primera vez
+  20   1              {
+  21   2                      CodigoAnterior = CodigoActual;
+  22   2                      EstadosEstables = 1;
+  23   2                      return;
+  24   2              }
+  25   1      
+  26   1              if( CodigoActual != CodigoAnterior )                                            // Pregunto si la tecla sigue pulsada
+  27   1              {
+  28   2                      CodigoAnterior = NO_KEY;
+  29   2                      EstadosEstables = 0;
+  30   2                      return;
+  31   2              }
+  32   1      
+  33   1              if( EstadosEstables == CANTIDAD_DE_REBOTES )
+  34   1              {
+  35   2                      key = CodigoActual;                                                                                     // Acepto la nueva tecla
+  36   2                      EstadosEstables = 0;                            
+  37   2                                                                                                                      
+  38   2                      return;
+  39   2              }
+  40   1      
+  41   1              EstadosEstables ++;
+  42   1              return;
+  43   1      }
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =     62    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =      3    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =   ----    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

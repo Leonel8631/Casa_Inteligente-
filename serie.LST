@@ -1,0 +1,185 @@
+C51 COMPILER V9.03   SERIE                                                                 02/06/2013 19:15:11 PAGE 1   
+
+
+C51 COMPILER V9.03, COMPILATION OF MODULE SERIE
+OBJECT MODULE PLACED IN serie.OBJ
+COMPILER INVOKED BY: C:\Keil\C51\BIN\C51.EXE serie.c LARGE BROWSE DEBUG OBJECTEXTEND
+
+line level    source
+
+   1          
+   2          // =========================================================================================
+   3          //  Módulo: INFOII-07TX.C                                                         
+   4          //  Propósito: funciones de transmision y recepcion     del puerto serie
+   5          //  Fecha: 26-06-09
+   6          //  Autor: Ing. Gustavo Fresno
+   7          //=========================================================================================
+   8          #include "INFOII.h"
+   9          #include <string.h>
+  10          #define PUERTO_0                0
+  11          
+  12          unsigned char           Buffer_UART[50];
+  13          unsigned char           Tamanio_Paquete_UART = 0;
+  14          unsigned char           Puntero_UART;
+  15          unsigned char       Puerto_Serie = 0;
+  16          extern bit ESTADO_LED_1;
+  17          extern bit ESTADO_LED_2;
+  18          extern bit ESTADO_LED_3;
+  19          extern bit ESTADO_LED_4;
+  20          
+  21          //=========================================================================================
+  22          // Configuro la UART
+  23          //=========================================================================================
+  24          void UART_Init(void)
+  25          {
+  26   1      //      char SFRPAGE_SAVE = SFRPAGE;            // Save Current SFR page
+  27   1      //      SFRPAGE = UART0_PAGE;
+  28   1      //      SCON0 = 0x50; 
+  29   1      //      PCON = 0x80;                            // SCON0: mode 1, 8-bit UART, enable RX
+  30   1      //      SSTA0 = 0x10;                                           // BR / 1, T1 genera BR
+  31   1      //      TI0    = 0;                         // Indicate TX0 ready
+  32   1      //      ES0 = 1; 
+  33   1      //      EIE2 = 0;
+  34   1      
+  35   1      //      SFRPAGE = SFRPAGE_SAVE;                         // Restore SFR page
+  36   1              TCON = 0x00|(TCON&0x33);                        // Timer 1 y 0 apagados
+  37   1              TMOD = (TMOD&0x0f)|0x20;                        // Timer 1 control por TR1, timer auto reload
+  38   1              CKCON = (CKCON&0xF0)|0x10;                      // T1CLK = SYSCLK
+  39   1      
+  40   1              TH1 = -(SYSCLK/BAUDRATE/32);            // set Timer1 reload value for baudrate
+  41   1      
+  42   1              TR1 = 1;                                // Arranco el Timer1
+  43   1      
+  44   1              SCON0 = 0x50;                           // SCON0: mode 1, 8-bit UART, enable RX
+  45   1         //ver que puerto serie utilizamos es SCON0 port 0 o SCON1
+  46   1              PCON = 0x80;
+  47   1      
+  48   1              TI0    = 1;                         // Indicate TX0 ready
+  49   1              ES0=1;
+  50   1      
+  51   1      }
+  52          
+  53          //=========================================================================================
+  54          // Interrupcion de la UART 0
+  55          //=========================================================================================
+C51 COMPILER V9.03   SERIE                                                                 02/06/2013 19:15:11 PAGE 2   
+
+  56          void Interrupcion_Serie0 (void) interrupt 4 
+  57          {
+  58   1              unsigned char   dato;
+  59   1      
+  60   1              if(SCON0 & 0x01) // RI0                                         // Chequeo RI1 en el registro SCON1, si llego una interupcion por recepcion
+  61   1              {       
+  62   2              //LED_3_ON;                                                                             // Verifico si ha Interrumpido por Recepción
+  63   2                  SCON0 &= ~0x01;                                                     // Reseteo Flag de Recepción
+  64   2      
+  65   2                      dato = SBUF0;                                                   // Vacío el buffer
+  66   2              }
+  67   1              else
+  68   1              {
+  69   2              
+  70   2                      if(SCON0 & 0x02)        // TI0
+  71   2                      {                                                                               // Verifico si ha Interrumpido por Transmisión
+  72   3                          SCON0 &= ~0x02;                                             // Reseteo Flag de transmision
+  73   3                              if(Tamanio_Paquete_UART)                        // Si tengo datos para transmitir...
+  74   3                              {
+  75   4                                      SBUF0 = Buffer_UART[Puntero_UART];
+  76   4                                      
+  77   4                                      Puntero_UART++;
+  78   4                                      if(Puntero_UART == Tamanio_Paquete_UART)
+  79   4                                      {
+  80   5                                              Tamanio_Paquete_UART = 0;
+  81   5                                              Puntero_UART = 0;
+  82   5                                      }
+  83   4                              }
+  84   3                      }
+  85   2              }
+  86   1              return;
+  87   1      }
+  88          
+  89          
+  90          //=========================================================================================
+  91          // Para enviar un paquete a la UART 1
+  92          //=========================================================================================
+  93          void Enviar_Paquete_UART(unsigned char *Paquete, unsigned char Tamanio)
+  94          {
+  95   1              unsigned char i;
+  96   1      
+  97   1              if(!Tamanio_Paquete_UART)
+  98   1              {
+  99   2                      for(i = 0 ; i < Tamanio ; i++)
+ 100   2                              Buffer_UART[i] = Paquete[i];    // Copio todo al buffer de comunicaciones
+ 101   2                 
+ 102   2                      Tamanio_Paquete_UART = Tamanio;
+ 103   2                  SCON0 &= ~0x02;                                             // Reseteo Flag de transmision
+ 104   2                      SBUF0 = Buffer_UART[0];                         // Disparo la nueva transmision
+ 105   2                      Puntero_UART = 1;
+ 106   2              }
+ 107   1      }        
+ 108          /*
+ 109          //=========================================================================================
+ 110          // Para enviar un valor a la UART 1
+ 111          //=========================================================================================
+ 112          void Enviar_Valor_UART ( int val , unsigned char Tamanio)
+ 113          {
+ 114                  unsigned char i;
+ 115          
+ 116                  if(!Tamanio_Paquete_UART)
+ 117                  {                                                        
+C51 COMPILER V9.03   SERIE                                                                 02/06/2013 19:15:11 PAGE 3   
+
+ 118                          for (i = (Tamanio -1) ; i ; i-- )
+ 119                          {
+ 120                                  Buffer_UART[i] = (val % 10) + '0';
+ 121                                  val /= 10;
+ 122                          }
+ 123                            
+ 124          
+ 125                          Tamanio_Paquete_UART = Tamanio - 1;
+ 126                      SCON0 &= ~0x02;                                             // Reseteo Flag de transmision
+ 127                          SBUF0 = (val % 10) + '0';
+ 128                          Puntero_UART = 1;
+ 129                  }
+ 130          
+ 131          }
+ 132           */     
+ 133          
+ 134          
+ 135           void Envio_Zonas(void)
+ 136           {      //El valor de la temperatura,el error si es que se genero, el estado
+ 137   1      /*
+ 138   1              PROTOCOLO:      ENVIO           <-DISP-ESTADO-T1-T2-.-T3-T4->-XSUM                              
+ 139   1      */
+ 140   1              unsigned char i=0;
+ 141   1              unsigned char XSUM=0;
+ 142   1              unsigned char aux[6+1];
+ 143   1      
+ 144   1              aux[0]='<';                                     //Le paso el inicio
+ 145   1              aux[1]=1+'0';                   //Temperatura 4 digitos
+ 146   1              aux[2]=ESTADO_LED_2;                    //  |     
+ 147   1              aux[3]=ESTADO_LED_3;                            //Punto que separa las unidades de las decimas
+ 148   1              aux[4]=ESTADO_LED_4;                    //  |           //  --
+ 149   1              aux[5]='>';                             //Fin de paquete
+ 150   1              
+ 151   1      
+ 152   1              for(i=0;i<6;i++)
+ 153   1                      XSUM+=aux[i];           //genero el cheksum
+ 154   1              aux[6]=XSUM;                    //cheksum de validacion
+ 155   1              Enviar_Paquete_UART(aux, 7);
+ 156   1              
+ 157   1      
+ 158   1      }
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    271    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =     53      11
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =   ----    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

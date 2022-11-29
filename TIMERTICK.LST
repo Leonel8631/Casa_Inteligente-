@@ -1,0 +1,118 @@
+C51 COMPILER V9.03   TIMERTICK                                                             02/06/2013 19:00:55 PAGE 1   
+
+
+C51 COMPILER V9.03, COMPILATION OF MODULE TIMERTICK
+OBJECT MODULE PLACED IN TIMERTICK.OBJ
+COMPILER INVOKED BY: C:\Keil\C51\BIN\C51.EXE TIMERTICK.C LARGE BROWSE DEBUG OBJECTEXTEND
+
+line level    source
+
+   1          //********************************************************************************************************
+             -*******************
+   2          //      Proposito: Timer_Tick, funcion que se llama por interrupcion de timer cada 
+   3          //      Parametros: void
+   4          //      Retorna: void.                                                                                                                          
+   5          //********************************************************************************************************
+             -*******************
+   6          
+   7          #include <INFOII.h>
+   8          
+   9          
+  10          unsigned char   decimas = DECIMAS;
+  11          unsigned char   segundos = SEGUNDOS;
+  12          unsigned char   minutos = MINUTOS;
+  13          unsigned char   horas = HORAS;
+  14          unsigned char cont=0;
+  15          
+  16          void Timer_Tick(void) interrupt 1       
+  17          {
+  18   1              
+  19   1          TR0 = 0;
+  20   1          TH0 = t_2500Hz_H;                                           // 2500Hz
+  21   1          TL0 = t_2500Hz_L + TL0;                                     // Xtal 22MHz
+  22   1          TR0 = 1;
+  23   1      
+  24   1              //---------------------------------------------------------------------------------
+  25   1              // Aca tengo que poner todas las funciones que quiero que funcionen a 2,5 milisegundos
+  26   1              //---------------------------------------------------------------------------------
+  27   1      
+  28   1              Barrido_Display();                                              // Realizo el barrido del display
+  29   1              Board();
+  30   1              //---------------------------------------------------------------------------------
+  31   1      
+  32   1              decimas--;
+  33   1              if(!decimas)                                                    // Base de tiempo de CENTESIMAS
+  34   1              {
+  35   2                      decimas = DECIMAS;
+  36   2      
+  37   2                      //---------------------------------------------------------------------------------
+  38   2                      // Aca tengo que poner todas las funciones que quiero que funcionen a 1 centesima
+  39   2                      //---------------------------------------------------------------------------------
+  40   2      
+  41   2      
+  42   2                      //---------------------------------------------------------------------------------
+  43   2      
+  44   2                      segundos--;
+  45   2                      if(!segundos)   // Base de tiempo de SEGUNDOS
+  46   2                      {
+  47   3                              segundos = SEGUNDOS;
+  48   3                              TIMERS_Descuento(0);
+  49   3                              TIMERS_Descuento(1);
+  50   3                              TIMERS_Descuento(2);
+  51   3                              Envio_Zonas();
+  52   3                              
+  53   3                              
+C51 COMPILER V9.03   TIMERTICK                                                             02/06/2013 19:00:55 PAGE 2   
+
+  54   3                              //---------------------------------------------------------------------------------
+  55   3                              // Aca tengo que poner todas las funciones que quiero que funcionen a 1 segundos
+  56   3                              //---------------------------------------------------------------------------------
+  57   3      
+  58   3      
+  59   3                              //---------------------------------------------------------------------------------
+  60   3      
+  61   3                              minutos--;
+  62   3                              
+  63   3                              if(!minutos)                                                    // Base de tiempo de MINUTOS
+  64   3                              {
+  65   4                                      minutos = MINUTOS;
+  66   4              
+  67   4                              
+  68   4                                      //---------------------------------------------------------------------------------
+  69   4                                      // Aca tengo que poner todas las funciones que quiero que funcionen a 1 centesima
+  70   4                                      //---------------------------------------------------------------------------------
+  71   4      
+  72   4      
+  73   4                                      //---------------------------------------------------------------------------------
+  74   4      
+  75   4                                      horas--;
+  76   4      
+  77   4                                      if(!horas)                                                      // Base de tiempo de HORAS
+  78   4                                      {
+  79   5                                              horas = HORAS;
+  80   5      
+  81   5                                              //---------------------------------------------------------------------------------
+  82   5                                              // Aca tengo que poner todas las funciones que quiero que funcionen a 1 centesima
+  83   5                                              //---------------------------------------------------------------------------------
+  84   5      
+  85   5      
+  86   5                                              //---------------------------------------------------------------------------------
+  87   5                                      }
+  88   4                              }
+  89   3                      }
+  90   2              }
+  91   1      }
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    137    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =      5    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =   ----    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

@@ -1,0 +1,266 @@
+C51 COMPILER V9.03   INFOII_09TM                                                           02/06/2013 19:00:55 PAGE 1   
+
+
+C51 COMPILER V9.03, COMPILATION OF MODULE INFOII_09TM
+OBJECT MODULE PLACED IN INFOII-09tm.OBJ
+COMPILER INVOKED BY: C:\Keil\C51\BIN\C51.EXE INFOII-09tm.c LARGE BROWSE DEBUG OBJECTEXTEND
+
+line level    source
+
+   1          // =========================================================================================
+   2          //  Propósito: Tunciones de temporizadores                                 
+   3          //  Módulo componente de: INFOII-2010
+   4          //  Fecha: 14-05-2010
+   5          //  Autor: Ing. Gustavo Fresno
+   6          // =========================================================================================
+   7          #include "INFOII.h"
+   8          
+   9          //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+             -+++++++++++++
+  10          // Declaracion de variables
+  11          //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+  12          // Variables globales 
+  13          //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+  14          // Variables para los temporizadores
+  15          STRUCT_TIMER    Timers;
+  16          
+  17          //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+  18          // Variables globales externas
+  19          extern unsigned char Flag_Fin_T0;
+  20          extern unsigned char Flag_Fin_T1;
+  21          extern unsigned char Flag_Fin_T2;
+  22          //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+  23          
+  24          
+  25           
+  26          //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+             -+++++++++++++
+  27          // Funciones
+  28          //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+  29          //******************************************************************************************
+  30          //      Proposito: Lanzamientos de Timers.                                              
+  31          //      Parametros:                                                                                                                                     
+  32          //                  Nro_Timer : Numero de Timer                                         
+  33          //                  Tiempo : valor de Timer.                                            
+  34          //      Retorna: void.                                                                                                                          
+  35          //******************************************************************************************
+  36          void TIMERS_Encender(unsigned char Nro_Timer, TIEMPOS Tiempo)
+  37          {
+  38   1              ET0 = 0;                                                                                                        // Dehabilito la interrupcion del timer 0
+  39   1      
+  40   1              Timers.Cuenta[Nro_Timer] = Tiempo;                                                      // Cargo el temporizador
+  41   1              Timers.F_Final &= (~( (FLAGS_TIMERS) 0x01 << Nro_Timer) );      // Apago el flag del temporizador
+  42   1      
+  43   1              ET0 = 1;                                                                                                        // Habilito la interrupcion del timer 0
+  44   1      }
+  45          
+  46          //******************************************************************************************
+  47          //      Proposito: Lanzamientos de Timers. (Condicion tiempo 0 activo el evento)                                                
+  48          //      Parametros:                                                                                                                                     
+  49          //                  Nro_Timer : Numero de Timer                                         
+  50          //                  Tiempo : valor de Timer.                                            
+  51          //      Retorna: void.                                                                                                                          
+  52          //******************************************************************************************
+  53          //void TIMERS_Encender(unsigned char Nro_Timer, TIEMPOS Tiempo)
+C51 COMPILER V9.03   INFOII_09TM                                                           02/06/2013 19:00:55 PAGE 2   
+
+  54          //{
+  55          //      if(Tiempo)
+  56          //      {
+  57          //              ET0 = 0;                                                                                                        // Dehabilito la interrupcion del timer 0
+  58          //              Timers.Cuenta[Nro_Timer] = Tiempo;                                                      // Cargo el temporizador
+  59          //      Timers.F_Final &= (~( (FLAGS_TIMERS) 0x01 << Nro_Timer) );      // Apago el flag del temporizador
+  60          //              ET0 = 1;                                                                                                        // Habilito la interrupcion del timer 0
+  61          //      }
+  62          //      else
+  63          //      {
+  64          //              ET0 = 0;                                                                                                        // Dehabilito la interrupcion del timer 0
+  65          //              Timers.Cuenta[Nro_Timer]=0;
+  66          //              Timers.F_Final |= ( (FLAGS_TIMERS) 0x01 << Nro_Timer);          
+  67          //              ET0 = 1;                                                                                                        // Habilito la interrupcion del timer 0
+  68          //      }
+  69          //}
+  70          
+  71          //******************************************************************************************
+  72          //      Proposito: Apaga todo los timers
+  73          //      Parametros: void
+  74          //      Retorna: void.                                                                                                                          
+  75          //******************************************************************************************
+  76          void TIMERS_Apagar_Todos(void)
+  77          {
+  78   1              unsigned char i;
+  79   1              
+  80   1              ET0 = 0;                                                                        // Dehabilito la interrupcion del timer 0
+  81   1                                                                                                              
+  82   1              for (i = CANTIDAD_DE_TIMERS ; i ;  i--)
+  83   1                      Timers.Cuenta[i] = 0;
+  84   1              Timers.Cuenta[0] = 0;                                           // Reseteo todos los temporizadores
+  85   1              
+  86   1              Timers.F_Final = 0;                                                     // Apago todos los flags de los timers
+  87   1      
+  88   1              ET0 = 1;                                                                        // Habilito la interrupcion del timer 0
+  89   1      }
+  90           /*
+  91          //*******************************************************************************************
+  92          //      Proposito: Apaga un timer en particular
+  93          //      Parametros:                                                                                                                                     
+  94          //                  Nro_Timer : Numero de Timer                                         
+  95          //      Retorna: void.                                                                                                                          
+  96          //*******************************************************************************************
+  97          void TIMERS_Detener(unsigned char Nro_Timer)
+  98          {
+  99                  ET0 = 0;                                                                                                // Dehabilito la interrupcion del timer 0
+ 100          
+ 101                  Timers.Cuenta[Nro_Timer] = 0;                                                   // Reseteo el temporizador
+ 102                  Timers.F_Final &= (~((FLAGS_TIMERS) 0x01 << Nro_Timer));        // Reseteo el flag del temporizador
+ 103          
+ 104                  ET0 = 1;                                                                                                // Habilito la interrupcion del timer 0
+ 105          }       */ 
+ 106          
+ 107          //*******************************************************************************************
+ 108          //      Proposito: Analiza flags de timers.                                             
+ 109          //      Parametros: void.                                                                                                                               
+ 110          //      Retorna: void.                                                                                                                                  
+ 111          //*******************************************************************************************
+ 112          void TIMERS_Verificar_Fin(void)
+ 113          {
+ 114   1              FLAGS_TIMERS j;
+ 115   1      
+C51 COMPILER V9.03   INFOII_09TM                                                           02/06/2013 19:00:55 PAGE 3   
+
+ 116   1          for( j = 1 ; j ; j <<= 1)
+ 117   1          {
+ 118   2              switch( Timers.F_Final &  j )
+ 119   2              {
+ 120   3                              case T0 :
+ 121   3      
+ 122   3                                      //----------------------------------------------------------------------------
+ 123   3                                      // Aca escribimos las rutinas que se van a ejecutar cuando se vence el Timer 0
+ 124   3                                      Flag_Fin_T0=ON;
+ 125   3                                      //----------------------------------------------------------------------------
+ 126   3                                      //----------------------------------------------------------------------------
+ 127   3                              Timers.F_Final = Timers.F_Final & ~T0;
+ 128   3                              break;
+ 129   3                                      
+ 130   3                  case T1 :
+ 131   3                                      //----------------------------------------------------------------------------
+ 132   3                                      // Aca escribimos las rutinas que se van a ejecutar cuando se vence el Timer 1
+ 133   3                                      Flag_Fin_T1=ON;
+ 134   3                                      //----------------------------------------------------------------------------
+ 135   3                                      //----------------------------------------------------------------------------
+ 136   3                                      Timers.F_Final = Timers.F_Final & ~T1;
+ 137   3                      break;
+ 138   3                              
+ 139   3                  case T2 :
+ 140   3                                      //----------------------------------------------------------------------------
+ 141   3                                      // Aca escribimos las rutinas que se van a ejecutar cuando se vence el Timer 2
+ 142   3                                      Flag_Fin_T2=ON;
+ 143   3                                      //----------------------------------------------------------------------------
+ 144   3                                      //----------------------------------------------------------------------------
+ 145   3                                      Timers.F_Final = Timers.F_Final & ~T2;                  
+ 146   3                      break;  
+ 147   3                                            
+ 148   3                  case T3 :
+ 149   3                                      //----------------------------------------------------------------------------
+ 150   3                                      // Aca escribimos las rutinas que se van a ejecutar cuando se vence el Timer 3
+ 151   3                                      //----------------------------------------------------------------------------
+ 152   3                                      //----------------------------------------------------------------------------
+ 153   3                                      Timers.F_Final = Timers.F_Final & ~T3;
+ 154   3                      break;
+ 155   3                              
+ 156   3                  case T4 :
+ 157   3                                      //----------------------------------------------------------------------------
+ 158   3                                      // Aca escribimos las rutinas que se van a ejecutar cuando se vence el Timer 4
+ 159   3                                      //----------------------------------------------------------------------------
+ 160   3                                      //----------------------------------------------------------------------------
+ 161   3                                      Timers.F_Final = Timers.F_Final & ~T4;
+ 162   3                      break; 
+ 163   3                      
+ 164   3                  case T5 :
+ 165   3                                      //----------------------------------------------------------------------------
+ 166   3                                      // Aca escribimos las rutinas que se van a ejecutar cuando se vence el Timer 5
+ 167   3                                      //----------------------------------------------------------------------------
+ 168   3      
+ 169   3                                      //----------------------------------------------------------------------------
+ 170   3                                      Timers.F_Final = Timers.F_Final & ~T5;
+ 171   3                      break; 
+ 172   3       
+ 173   3                  case T6 :
+ 174   3                                      //----------------------------------------------------------------------------
+ 175   3                                      // Aca escribimos las rutinas que se van a ejecutar cuando se vence el Timer 6
+ 176   3                                      //----------------------------------------------------------------------------
+ 177   3                                      //----------------------------------------------------------------------------
+C51 COMPILER V9.03   INFOII_09TM                                                           02/06/2013 19:00:55 PAGE 4   
+
+ 178   3                                      Timers.F_Final = Timers.F_Final & ~T6;
+ 179   3                      break; 
+ 180   3      
+ 181   3                  case T7 :
+ 182   3                                      //----------------------------------------------------------------------------
+ 183   3                                      // Aca escribimos las rutinas que se van a ejecutar cuando se vence el Timer 7
+ 184   3                                      //----------------------------------------------------------------------------
+ 185   3                                      //----------------------------------------------------------------------------
+ 186   3                                      Timers.F_Final = Timers.F_Final & ~T7;
+ 187   3                      break; 
+ 188   3      
+ 189   3                  default:
+ 190   3                      break; 
+ 191   3                      }                       
+ 192   2          }
+ 193   1      }
+ 194          
+ 195          //******************************************************************************************
+ 196          //      Proposito: Descuento de Timers.                                                 
+ 197          //      Parametros:                                                                                                                                     
+ 198          //                  Nro_Timer : Numero de Timer                                                                 
+ 199          //      Retorna: void.                                                                                                                          
+ 200          //******************************************************************************************
+ 201          void TIMERS_Descuento(unsigned char Nro_Timer)
+ 202          {
+ 203   1              //LED_4_ON;
+ 204   1              if (Timers.Cuenta[ Nro_Timer ])
+ 205   1              {
+ 206   2                      Timers.Cuenta[ Nro_Timer ] --;
+ 207   2                      if( !Timers.Cuenta[ Nro_Timer ] )
+ 208   2                              Timers.F_Final |= ( (FLAGS_TIMERS) 0x01 << Nro_Timer );
+ 209   2              }
+ 210   1      }
+ 211          
+ 212          //******************************************************************************************
+ 213          //      Proposito: Inicializar de Timers.                                               
+ 214          //      Parametros:                                                                                                                                     
+ 215          //      Retorna: void.                                                                                                                          
+ 216          //******************************************************************************************
+ 217          void TIMERS_Inicializar(void)
+ 218          {
+ 219   1              TIMERS_Apagar_Todos();
+ 220   1      
+ 221   1      }
+ 222                                          
+ 223          
+ 224          
+ 225          
+ 226          
+ 227          
+ 228          
+ 229          
+ 230          
+ 231          
+ 232          
+ 233          
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    315    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =     17       1
+C51 COMPILER V9.03   INFOII_09TM                                                           02/06/2013 19:00:55 PAGE 5   
+
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =   ----    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

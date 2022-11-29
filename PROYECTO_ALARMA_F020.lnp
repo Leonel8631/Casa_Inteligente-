@@ -1,0 +1,17 @@
+"INFOII-09IN.obj",
+"STARTUP.obj",
+"main.obj",
+"TECLADOSW.obj",
+"TECLADOPR.obj",
+"TECLADOHW.obj",
+"TECLADOBUF.obj",
+"DISPLAY7SEGPR.obj",
+"DISPLAY7SEGHW.obj",
+"dispLCD.obj",
+"serie.obj",
+"INFOII-09AD.obj",
+"TIMERTICK.obj",
+"INFOII-09tm.obj" 
+TO "PROYECTO_ALARMA_F020" 
+RAMSIZE(256) 
+CODE(0x0100 - 0xef00) 

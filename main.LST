@@ -1,0 +1,501 @@
+C51 COMPILER V9.03   MAIN                                                                  02/06/2013 19:13:37 PAGE 1   
+
+
+C51 COMPILER V9.03, COMPILATION OF MODULE MAIN
+OBJECT MODULE PLACED IN main.OBJ
+COMPILER INVOKED BY: C:\Keil\C51\BIN\C51.EXE main.c LARGE BROWSE DEBUG OBJECTEXTEND
+
+line level    source
+
+   1          #include <INFOII.h>
+   2          #define PROGRAMACION 3
+   3          #define ALARMADA 4
+   4          #define SIRENA_ON LED_1_ON
+   5          #define SIRENA_OFF LED_1_OFF
+   6          #define SENSOR TECLA_4
+   7          #define ERROR 2
+   8          #define INGRESO_CLAVE 5
+   9          #define INGRESO_CLAVE_DESACTIVAR 6
+  10          #define CAMBIAR_CLAVE 7
+  11          #define ACTIVAR_ZONAS 8
+  12          
+  13          
+  14          
+  15          unsigned char i;
+  16          long int Clave;
+  17          long int ClaveM;
+  18          long int Clave_Maestra;
+  19          unsigned char Flag_Clave;
+  20          unsigned char Flag_Sensores;
+  21          unsigned char TECLA;
+  22          unsigned char ESTADO=OFF;
+  23          unsigned char Flag_Fin_T0;
+  24          unsigned char Flag_Fin_T1;
+  25          unsigned char Flag_Fin_T2;
+  26          unsigned char Flag_Cambio_Clave;
+  27          bit ESTADO_LED_1;
+  28          bit ESTADO_LED_2;
+  29          bit ESTADO_LED_3;
+  30          bit ESTADO_LED_4;
+  31          
+  32          
+  33          unsigned int RefLuz = 2000;      // REFERENCIA DE LUZ
+  34          unsigned int RefMINTemp=600;     // REFERENCIA DE TEMP MINIMA ADMISIBLE
+  35          unsigned int RefMAXTemp=1600;    // REFERENCIA DE TEMP MAXIMA ADMISIBLE
+  36          
+  37          extern unsigned int             Medicion_ADC[3]; // VECTOR DONDE GUARDO MEDICIONES DE ADC
+  38          
+  39          void main (void)
+  40          {
+  41   1              Inicializacion();
+  42   1              TECLA=0;
+  43   1              Clave=0;
+  44   1              Clave_Maestra=1234;
+  45   1              i=0;
+  46   1              Flag_Clave=0;
+  47   1              Flag_Sensores=0;
+  48   1              Flag_Cambio_Clave=0;
+  49   1              Flag_Fin_T0=0;
+  50   1              Flag_Fin_T1=0;
+  51   1              Flag_Fin_T2=0;
+  52   1              UART_Init();
+  53   1              Inic_LCD();
+  54   1              Inic_ADC();
+  55   1              DISPLAYLCD("BIENVENIDOS", 11, 0,0);
+C51 COMPILER V9.03   MAIN                                                                  02/06/2013 19:13:37 PAGE 2   
+
+  56   1              DISPLAYLCD("AL SISTEMA", 10, 1,0);
+  57   1              TIMERS_Encender(0,4);
+  58   1              Enviar_Paquete_UART("ALARMA CONECTADA", 16);
+  59   1              Display(0);
+  60   1              
+  61   1              while(1)
+  62   1              {
+  63   2                      TIMERS_Verificar_Fin();
+  64   2                      if(Flag_Fin_T0==ON)
+  65   2                      {
+  66   3                              Flag_Fin_T0=OFF;
+  67   3                              Inic_LCD();
+  68   3                              DISPLAYLCD("F1: ACTIVAR", 11, 0,0);
+  69   3                              DISPLAYLCD("F2: Programacion", 16, 1,0);
+  70   3                      }
+  71   2                      if(Flag_Fin_T1==ON)
+  72   2                      {
+  73   3                              Flag_Fin_T1=OFF;
+  74   3                              Inic_LCD();
+  75   3                              DISPLAYLCD("ALARMA ACTIVADA", 15, 0,0);
+  76   3                              DISPLAYLCD("F3: DESACTIVAR", 14, 1,0);
+  77   3                      }
+  78   2      
+  79   2                      if(Flag_Fin_T2==ON)
+  80   2                      {
+  81   3                              Flag_Fin_T2=OFF;
+  82   3                              Inic_LCD();
+  83   3                              DISPLAYLCD("INGRESE CLAVE", 13, 0,0);
+  84   3                      }
+  85   2      
+  86   2                      TECLA=Get_Key();
+  87   2                      /*if(TECLA!=NO_KEY)
+  88   2                      //Display(TECLA);*/      
+  89   2                      Aplicacion();
+  90   2                      Estado_Sensores();
+  91   2                              Chequear_Luz();
+  92   2                      Chequear_Temperatura();
+  93   2                      
+  94   2                              
+  95   2      
+  96   2              }
+  97   1      
+  98   1      }
+  99          
+ 100          void Aplicacion(void)
+ 101          {
+ 102   1              
+ 103   1              switch(ESTADO)
+ 104   1              {
+ 105   2                      case OFF: 
+ 106   2      
+ 107   2                              if(TECLA == TECLA_F1)
+ 108   2                              {                                                       
+ 109   3      
+ 110   3                                      SIRENA_OFF;
+ 111   3                                      ESTADO=INGRESO_CLAVE; 
+ 112   3                                      Inic_LCD();
+ 113   3                                      DISPLAYLCD("INGRESE CLAVE", 13, 0,0);
+ 114   3                                      
+ 115   3                              }
+ 116   2                              if(TECLA==TECLA_F2)
+ 117   2                              {
+C51 COMPILER V9.03   MAIN                                                                  02/06/2013 19:13:37 PAGE 3   
+
+ 118   3                                      SIRENA_OFF;
+ 119   3                                      ESTADO=PROGRAMACION;
+ 120   3                                      Inic_LCD();
+ 121   3                                      DISPLAYLCD("ESTADO PROGRAMAC", 16, 0,0);
+ 122   3                                      DISPLAYLCD("F3: ESTADO OFF", 14, 1,0);
+ 123   3                              }
+ 124   2                              break;
+ 125   2      
+ 126   2                      case PROGRAMACION:                // agregar menu para ver que hace el usuario
+ 127   2                              
+ 128   2                              if(TECLA == TECLA_F1)
+ 129   2                              {
+ 130   3                                      Inic_LCD();
+ 131   3                                      DISPLAYLCD("ACTIVAR ZONAS",13, 0,0);
+ 132   3                                      SIRENA_OFF;
+ 133   3                                      ESTADO=ACTIVAR_ZONAS;
+ 134   3                              } 
+ 135   2                              if(TECLA == TECLA_F2)
+ 136   2                              {
+ 137   3                                      Inic_LCD();
+ 138   3                                      DISPLAYLCD("CAMBIAR CLAVE",13, 0,0);
+ 139   3                                      SIRENA_OFF;
+ 140   3                                      ESTADO=CAMBIAR_CLAVE;
+ 141   3                              } 
+ 142   2                              if(TECLA == TECLA_F3)
+ 143   2                              {
+ 144   3                                      Inic_LCD();
+ 145   3                                      DISPLAYLCD("ESTADO OFF",10, 0,0);
+ 146   3                                      TIMERS_Encender(0,4);
+ 147   3                                      SIRENA_OFF;
+ 148   3                                      ESTADO=OFF;
+ 149   3                              }  
+ 150   2                              
+ 151   2                              break;
+ 152   2      
+ 153   2                      case ACTIVAR_ZONAS:
+ 154   2                              LED_3_ON;
+ 155   2                              ESTADO=PROGRAMACION;
+ 156   2                              
+ 157   2                              break;
+ 158   2      
+ 159   2                      case CAMBIAR_CLAVE:
+ 160   2                              Flag_Cambio_Clave=Cambio_Clave();
+ 161   2                              if (Flag_Cambio_Clave==ON)
+ 162   2                              {
+ 163   3                                      Flag_Cambio_Clave=OFF;
+ 164   3                                      ESTADO=PROGRAMACION;                                                     
+ 165   3                                      Inic_LCD();
+ 166   3                                      DISPLAYLCD("CAMBIO DE CLAVE", 15, 0,0);
+ 167   3                                      DISPLAYLCD("CORRECTO", 8, 1,0);
+ 168   3                              }
+ 169   2      
+ 170   2                              if (Flag_Cambio_Clave==ERROR)
+ 171   2                              {
+ 172   3                                      Flag_Cambio_Clave=OFF;
+ 173   3                                      ESTADO=PROGRAMACION;
+ 174   3                                      Inic_LCD();
+ 175   3                                      DISPLAYLCD("CAMBIO DE CLAVE", 15, 0,0);
+ 176   3                                      DISPLAYLCD("INCORRECTO", 10, 1,0);
+ 177   3                              }       
+ 178   2                              
+ 179   2                              break;
+C51 COMPILER V9.03   MAIN                                                                  02/06/2013 19:13:37 PAGE 4   
+
+ 180   2      
+ 181   2                      case INGRESO_CLAVE:
+ 182   2                              Flag_Clave=Ingreso_Clave();
+ 183   2                              if(Flag_Clave==ON)
+ 184   2                              {
+ 185   3                                      Flag_Clave=OFF;
+ 186   3                                      Flag_Sensores=OFF;
+ 187   3                                      SIRENA_OFF;
+ 188   3                                      RELE_1_OFF;
+ 189   3                                      RELE_2_OFF;
+ 190   3                                      RELE_3_OFF;
+ 191   3                                      ESTADO=ON;
+ 192   3                                      Inic_LCD();
+ 193   3                                      DISPLAYLCD("INGRESO DE CLAVE", 16, 0,0);
+ 194   3                                      DISPLAYLCD("CORRECTO", 8, 1,0);
+ 195   3                                      TIMERS_Encender(1,4);
+ 196   3      
+ 197   3      
+ 198   3                              }
+ 199   2      
+ 200   2                              if (Flag_Clave==ERROR)
+ 201   2                              {
+ 202   3                                      Flag_Clave=OFF;
+ 203   3                                      Flag_Sensores=OFF;
+ 204   3                                      SIRENA_OFF;
+ 205   3                                      RELE_1_OFF;
+ 206   3                                      RELE_2_OFF;
+ 207   3                                      RELE_3_OFF;
+ 208   3                                      ESTADO=OFF;
+ 209   3                                      Inic_LCD();
+ 210   3                                      DISPLAYLCD("INGRESO DE CLAVE", 16, 0,0);
+ 211   3                                      DISPLAYLCD("INCORRECTO", 10, 1,0);
+ 212   3                                      TIMERS_Encender(0,4);
+ 213   3                              }
+ 214   2                                      
+ 215   2                              
+ 216   2                              break;
+ 217   2      
+ 218   2                      case INGRESO_CLAVE_DESACTIVAR:
+ 219   2                              Flag_Clave=Ingreso_Clave();
+ 220   2                              if(Flag_Clave==ON)
+ 221   2                              {
+ 222   3                                      Flag_Clave=OFF;
+ 223   3                                      Flag_Sensores=OFF;
+ 224   3                                      SIRENA_OFF;
+ 225   3                                      RELE_1_OFF;
+ 226   3                                      RELE_2_OFF;
+ 227   3                                      RELE_3_OFF;
+ 228   3                                      ESTADO=OFF;
+ 229   3                                      Inic_LCD();
+ 230   3                                      DISPLAYLCD("INGRESO DE CLAVE", 16, 0,0);
+ 231   3                                      DISPLAYLCD("CORRECTO", 8, 1,0);
+ 232   3                                      TIMERS_Encender(0,4);
+ 233   3                              }
+ 234   2      
+ 235   2                              else if(Flag_Clave==ERROR)
+ 236   2                              {
+ 237   3                                      Flag_Clave=OFF;
+ 238   3                                      Flag_Sensores=OFF;
+ 239   3                                      Inic_LCD();
+ 240   3                                      DISPLAYLCD("INGRESO DE CLAVE", 16, 0,0);
+ 241   3                                      DISPLAYLCD("INCORRECTO", 10, 1,0);                 
+C51 COMPILER V9.03   MAIN                                                                  02/06/2013 19:13:37 PAGE 5   
+
+ 242   3                                      TIMERS_Encender(2,4);
+ 243   3                              }        
+ 244   2      
+ 245   2                              break;
+ 246   2      
+ 247   2                      case ON:
+ 248   2                              
+ 249   2              
+ 250   2                              if(TECLA == TECLA_F3)
+ 251   2                              {
+ 252   3                                      SIRENA_OFF;
+ 253   3                                      ESTADO=INGRESO_CLAVE_DESACTIVAR;
+ 254   3                                      Inic_LCD();
+ 255   3                                      DISPLAYLCD("INGRESE CLAVE", 13, 0,0);
+ 256   3                              }
+ 257   2                              if(Flag_Sensores==ON)
+ 258   2                              {
+ 259   3                                      BUZZER_ON;
+ 260   3                                      ESTADO=ALARMADA;
+ 261   3                                      Inic_LCD();
+ 262   3                                      DISPLAYLCD("ESTADO ALARMADA", 15, 0,0);
+ 263   3                                      DISPLAYLCD("INGRESE CLAVE", 13, 1,0);
+ 264   3                                      RELE_1_ON;
+ 265   3                                      RELE_2_ON;
+ 266   3                                      RELE_3_ON;
+ 267   3                              }
+ 268   2                              
+ 269   2                              break;
+ 270   2      
+ 271   2                      case ALARMADA:
+ 272   2                              Flag_Clave=Ingreso_Clave();
+ 273   2                              if(Flag_Clave==ON)
+ 274   2                              {
+ 275   3                                      Flag_Clave=OFF;
+ 276   3                                      Flag_Sensores=OFF;
+ 277   3                                      SIRENA_OFF;
+ 278   3                                      RELE_1_OFF;
+ 279   3                                      RELE_2_OFF;
+ 280   3                                      RELE_3_OFF;
+ 281   3                                      ESTADO=OFF;
+ 282   3                                      Inic_LCD();
+ 283   3                                      DISPLAYLCD("INGRESO DE CLAVE", 16, 0,0);
+ 284   3                                      DISPLAYLCD("CORRECTO", 8, 1,0);
+ 285   3                                      TIMERS_Encender(0,4);
+ 286   3      
+ 287   3                              }
+ 288   2                              
+ 289   2                              if (Flag_Clave==ERROR)
+ 290   2                              {
+ 291   3                                      Flag_Clave=OFF;
+ 292   3                                      Inic_LCD();
+ 293   3                                      DISPLAYLCD("INGRESO DE CLAVE", 16, 0,0);
+ 294   3                                      DISPLAYLCD("INCORRECTO", 10, 1,0);
+ 295   3                                      TIMERS_Encender(2,4);
+ 296   3                              }       
+ 297   2                              break;
+ 298   2      
+ 299   2                      default:
+ 300   2                              break;
+ 301   2              }
+ 302   1                      
+ 303   1      }
+C51 COMPILER V9.03   MAIN                                                                  02/06/2013 19:13:37 PAGE 6   
+
+ 304           
+ 305          unsigned char Ingreso_Clave(void)
+ 306          {
+ 307   1              unsigned char b;
+ 308   1              if (i<4)
+ 309   1              {
+ 310   2                      if((TECLA!=NO_KEY)&(TECLA<10))
+ 311   2                      {
+ 312   3                              Clave*=10;
+ 313   3                              Clave+=TECLA;
+ 314   3                              i++;
+ 315   3                              Display(Clave);
+ 316   3                              if (i==4)
+ 317   3                              {
+ 318   4                                      if(Clave==Clave_Maestra)
+ 319   4                                      {
+ 320   5                                              Clave=0;
+ 321   5                                              i=0;
+ 322   5                                              return b=1;
+ 323   5                                      }
+ 324   4                                      else
+ 325   4                                      {
+ 326   5                                      i=0;
+ 327   5                                      Clave=0;
+ 328   5                                      return b=2;
+ 329   5                                      }
+ 330   4                              }       
+ 331   3                      }
+ 332   2              }
+ 333   1              
+ 334   1              return (b=0);
+ 335   1      } 
+ 336          
+ 337          
+ 338          void Estado_Sensores(void)
+ 339          {
+ 340   1              if (ESTADO==ON)
+ 341   1              {
+ 342   2      
+ 343   2              if((sensor_puerta==1)||(sensor_ventana_comedor==1)||(sensor_mov_comedor==1))                    
+ 344   2              {
+ 345   3                      Flag_Sensores=ON;
+ 346   3                      LED_1_ON;
+ 347   3                      ESTADO_LED_1=ON;
+ 348   3              }
+ 349   2              else
+ 350   2              {
+ 351   3                      LED_1_OFF;
+ 352   3                      ESTADO_LED_1=OFF;
+ 353   3              }
+ 354   2              if((sensor_ventana_cocina==1)||(sensor_mov_cocina==1))
+ 355   2              {
+ 356   3                      Flag_Sensores=ON;                       
+ 357   3                      LED_2_ON;
+ 358   3                      ESTADO_LED_2=ON;
+ 359   3              }
+ 360   2              else
+ 361   2              {
+ 362   3                      LED_2_OFF;
+ 363   3                      ESTADO_LED_2=OFF;
+ 364   3              }
+ 365   2              if((sensor_ventana_hab==1))     
+C51 COMPILER V9.03   MAIN                                                                  02/06/2013 19:13:37 PAGE 7   
+
+ 366   2              {
+ 367   3                      Flag_Sensores=ON;               
+ 368   3                      LED_3_ON;
+ 369   3                      ESTADO_LED_3=ON;
+ 370   3              }
+ 371   2              else
+ 372   2              {
+ 373   3                      LED_3_OFF;
+ 374   3                      ESTADO_LED_3=OFF;
+ 375   3              }                                 
+ 376   2              if((sensor_ventana_banio==1))
+ 377   2              {
+ 378   3                      Flag_Sensores=ON;                       
+ 379   3                      LED_4_ON;
+ 380   3                      ESTADO_LED_4=ON;
+ 381   3              }
+ 382   2              else
+ 383   2              {
+ 384   3                      LED_4_OFF;
+ 385   3                      ESTADO_LED_4=OFF;
+ 386   3              }        
+ 387   2              if(boton_panico==1)
+ 388   2                      BUZZER_ON;
+ 389   2              else
+ 390   2                      BUZZER_OFF;
+ 391   2              } 
+ 392   1      }
+ 393          
+ 394          
+ 395          unsigned char Cambio_Clave(void)
+ 396          {
+ 397   1              unsigned char b;
+ 398   1                      if (i<4)
+ 399   1                      {
+ 400   2                              if((TECLA!=NO_KEY)&(TECLA<10))
+ 401   2                              {
+ 402   3                                      ClaveM*=10;
+ 403   3                                      ClaveM+=TECLA;
+ 404   3                                      i++;
+ 405   3                                      Display(ClaveM);
+ 406   3                                      if (i==4)
+ 407   3                                      {
+ 408   4                                              Clave_Maestra=ClaveM;
+ 409   4                                              ClaveM=0;
+ 410   4                                              i=0;
+ 411   4                                              return b=1;
+ 412   4                                      }
+ 413   3      
+ 414   3                              }
+ 415   2                      }
+ 416   1                      
+ 417   1              return (b=0);
+ 418   1      
+ 419   1      }
+ 420          
+ 421                   void Chequear_Luz(void)
+ 422          {
+ 423   1              if(Medicion_ADC[0]<RefLuz)
+ 424   1              { 
+ 425   2                      RELE_1_ON;
+ 426   2              }
+ 427   1              else
+C51 COMPILER V9.03   MAIN                                                                  02/06/2013 19:13:37 PAGE 8   
+
+ 428   1              {
+ 429   2                      RELE_1_OFF;
+ 430   2              }
+ 431   1               if(Medicion_ADC[1]<RefLuz)
+ 432   1              { 
+ 433   2                      RELE_2_ON;
+ 434   2              }
+ 435   1              else
+ 436   1              {
+ 437   2                      RELE_2_OFF;
+ 438   2              }
+ 439   1      }
+ 440          
+ 441          void    Chequear_Temperatura(void){
+ 442   1      
+ 443   1      if(Medicion_ADC[2]>RefMAXTemp)
+ 444   1              { 
+ 445   2                      RELE_3_ON;      //ENCIENDO VENTILADOR
+ 446   2              }
+ 447   1              else
+ 448   1              {
+ 449   2                      if(Medicion_ADC[2]<(RefMAXTemp-150))
+ 450   2                      {RELE_3_OFF;}
+ 451   2              }
+ 452   1      if(Medicion_ADC[2]<RefMINTemp)
+ 453   1              { 
+ 454   2                      RELE_4_ON;      //ENCIENDO CALEFACTOR
+ 455   2              }
+ 456   1              else
+ 457   1              {
+ 458   2                      if(Medicion_ADC[2]>(RefMINTemp+150))
+ 459   2                      {RELE_4_OFF;}
+ 460   2              }
+ 461   1      } 
+ 462          
+ 463          
+ 464          
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =   1883    ----
+   CONSTANT SIZE    =    254    ----
+   XDATA SIZE       =     27       2
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =   ----    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =      4    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

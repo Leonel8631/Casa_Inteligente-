@@ -1,0 +1,286 @@
+C51 COMPILER V8.05a   FUNCIONES_COLAS_PSERIE0                                              11/17/2012 15:18:25 PAGE 1   
+
+
+C51 COMPILER V8.05a, COMPILATION OF MODULE FUNCIONES_COLAS_PSERIE0
+OBJECT MODULE PLACED IN Funciones_Colas_PSerie0.OBJ
+COMPILER INVOKED BY: C:\Keil\C51\BIN\C51.EXE Funciones_Colas_PSerie0.c BROWSE DEBUG OBJECTEXTEND
+
+line level    source
+
+   1          //-----------------------------------------------------------------------------
+   2          //-     Archivo:                                Funciones_Colas_PSerie.C                                                                                        -
+   3          //-----------------------------------------------------------------------------
+   4          //-     Comentario:                             Manejo de Comunicacion Serie con colas y                -
+   5          //-                                                     por interrupcion.                                                               -
+   6          //-                                                     Adaptado para usarlo con varias colas.                  -
+   7          //-                                                     Encapsulado para driver generico                                -
+   8          //-                                                                                                                                                     -
+   9          //-     Autor Original: Ing. Juan Cruz
+  10          //- Modificacion: Ing. Fresno Gustavo
+  11          //-     Version:                                002                                                                                             -
+  12          //-     Fecha inicio:                   09/2006                                                                                 -
+  13          //-     Ultima Modificacion:    10/2006                                                                                 -
+  14          //-----------------------------------------------------------------------------
+  15          //
+  16          //-----------------------------
+  17          //-     Inclusion de Archivos   -
+  18          //------------------------------
+  19          #include <C8051F020.H>
+  20           #include "Funciones_Colas_PSerie.h"
+  21          
+  22          STRUCT_COLA     UART0;  // Estructura principal
+  23          /* ------------------
+  24             -    Programa        -
+  25             ------------------ */
+  26          
+  27          
+  28          //---------------------------------------------------------------------------------
+  29          //-     Funcion:                void InicializarSerie (void);                                                   -
+  30          //---------------------------------------------------------------------------------
+  31          //-     Accion:                 Inicializa la Cola de Recepcion,                                                        -
+  32          //-                                     Inicializa la Cola de Transmision,                                                      -
+  33          //-                                     Inicializa variables de Control de Comunicacion Serie.          -
+  34          //--------------------------------------------------------------------------------- */
+  35          void InicializarSerie0 (void)
+  36          {
+  37   1              InicializarColaRecepcion0();                                    // Inicializo la Cola de Recepcion
+*** WARNING C206 IN LINE 37 OF FUNCIONES_COLAS_PSERIE0.C: 'InicializarColaRecepcion0': missing function-prototype
+  38   1              InicializarColaTransmision0();                                  // Inicializo la Cola de Transmision
+*** WARNING C206 IN LINE 38 OF FUNCIONES_COLAS_PSERIE0.C: 'InicializarColaTransmision0': missing function-prototype
+  39   1              UART0.TX.TxEnCurso = 0;                                                 // Señalizo Transmision En Curso NO
+  40   1      }
+  41          
+  42          //---------------------------------------------------------------------------------
+  43          //-     Funcion:                void InicializarColaRecepcion (void);                                           -
+  44          //---------------------------------------------------------------------------------
+  45          //-     Accion:                 Inicializa el Contador de Datos Almacenados en la Cola,         -
+  46          //-                                     Inicializa el Puntero para la Entrada de Datos a la Cola,       -
+  47          //-                                     Inicializa el Puntero para la Salida de Datos de la Cola.       -
+  48          //---------------------------------------------------------------------------------
+  49          void InicializarColaRecepcion0(void)
+  50          {
+*** ERROR C231 IN LINE 50 OF FUNCIONES_COLAS_PSERIE0.C: 'InicializarColaRecepcion0': redefinition
+  51   1              uint32_t i;
+  52   1      
+C51 COMPILER V8.05a   FUNCIONES_COLAS_PSERIE0                                              11/17/2012 15:18:25 PAGE 2   
+
+  53   1              UART0.RX.CantidadCola = 0;              // Inicializo Contador de Datos Almacenados
+  54   1              UART0.RX.EntradaCola = 0;               // Inicializo el Puntero para la Entrada de Datos
+  55   1              UART0.RX.SalidaCola = 0;                // Inicializo el Puntero para la Salida de Datos
+  56   1      
+  57   1              for( i = 0 ; i < LONG_COLA_RX0 ; i++)
+  58   1                      UART0.RX.Cola[i] = 0;
+  59   1      }
+*** ERROR C231 IN LINE 59 OF FUNCIONES_COLAS_PSERIE0.C: 'InicializarColaRecepcion0': redefinition
+  60          //---------------------------------------------------------------------------------
+  61          //-     Funcion:                uint8_t CantidadEnColaRecepcion (void);                         -
+  62          //---------------------------------------------------------------------------------
+  63          //-     Devuelve:               la cantidad de datos almacenados en la Cola de RX.                      -
+  64          //---------------------------------------------------------------------------------
+  65          uint32_t CantidadEnColaRecepcion0(void)
+  66          {
+  67   1          return (UART0.RX.CantidadCola);                             // Retorno Contador de Datos Almacenados en la Cola
+  68   1      }
+  69          
+  70          //---------------------------------------------------------------------------------
+  71          //-     Funci�n:      uint8_t AgregarDatoColaRecepcion (uint8_t dato)         -
+  72          //---------------------------------------------------------------------------------
+  73          //-     Acci�n:               Almacena el dato recibido en la cola de RX                                              -
+  74          //-                             Incrementa el contador de datos almacenados en la cola,                 -
+  75          //-                             actualiza el puntero de ingreso de datos a la cola.                             -
+  76          //-     Recibe:         Dato a almacenar                                                                                                -
+  77          //-     Devuelve:       OK                      Si no hubo problemas                                                            -
+  78          //-                             ERROR           Si la cola estaba llena                                                         -
+  79          //--------------------------------------------------------------------------------- */
+  80          uint8_t AgregarDatoColaRecepcion0(uint8_t dato)
+  81          {
+  82   1              // Verifico si la Cola esta llena
+  83   1              if(UART0.RX.CantidadCola >= LONG_COLA_RX0)
+  84   1              {
+  85   2                      return (ERROR_COLA_RX_LLENA);
+  86   2              }
+  87   1      
+  88   1              // Almaceno el Dato en la Cola
+  89   1              UART0.RX.Cola[UART0.RX.EntradaCola] = dato;
+  90   1              // Incremento el puntero de entrada de la cola de datos
+  91   1              UART0.RX.EntradaCola++;
+  92   1      
+  93   1              // Verifico si llegue al fin de la Cola
+  94   1              if (UART0.RX.EntradaCola >= LONG_COLA_RX0)
+  95   1                      UART0.RX.EntradaCola = 0;                                               // Inicializo Puntero para la Entrada de Datos a la Cola
+  96   1      
+  97   1              // Incremento el contador de datos recibidos
+  98   1              UART0.RX.CantidadCola++;
+  99   1      
+ 100   1              return (OK);                                                            
+ 101   1      }
+ 102          
+ 103          //---------------------------------------------------------------------------------
+ 104          //-     Funcion:        unsigned char RetirarDatoColaRecepcion (void)                   -
+ 105          //---------------------------------------------------------------------------------
+ 106          //-     Accion:         Recupera un dato de la cola de RX.                                                              -
+ 107          //-                             Decrementa el contador de datos almacenados en la cola,                 -
+ 108          //-                             actualiza el puntero de egreso de datos de la cola.                             -
+ 109          //-     Recibe:         void.                                                           -
+ 110          //-     Devuelve:       OK                      Si no hubo problemas                                                            -
+ 111          //-                             ERROR           Si la cola estaba vacia                                                         -
+ 112          //--------------------------------------------------------------------------------- */
+ 113          uint8_t RetirarDatoColaRecepcion0(void)
+C51 COMPILER V8.05a   FUNCIONES_COLAS_PSERIE0                                              11/17/2012 15:18:25 PAGE 3   
+
+ 114          {
+ 115   1              uint8_t dato;
+ 116   1      
+ 117   1              // Verifico si la Cola esta Vacia
+ 118   1              if(UART0.RX.CantidadCola == 0)
+ 119   1              {
+ 120   2                      return (ERROR_COLA_RX_VACIA);
+ 121   2              }
+ 122   1      
+ 123   1              // Retiro el dato de la cola de datos
+ 124   1              dato = UART0.RX.Cola[UART0.RX.SalidaCola];
+ 125   1              // Incremento el puntero de salida de la cola de datos
+ 126   1              UART0.RX.SalidaCola++;
+ 127   1      
+ 128   1              // Verifico si llegue al fin de la Cola
+ 129   1              if (UART0.RX.SalidaCola >= LONG_COLA_RX0)
+ 130   1                      UART0.RX.SalidaCola = 0;
+ 131   1      
+ 132   1              // Decremento el contador de datos recibidos
+ 133   1              UART0.RX.CantidadCola--;
+ 134   1      
+ 135   1              return dato;
+ 136   1      }
+ 137          
+ 138          //---------------------------------------------------------------------------------
+ 139          //-     Funcion:                void InicializarColaTransmision (void);                                         -
+ 140          //---------------------------------------------------------------------------------
+ 141          //-     Accion:                 Inicializa el Contador de Datos Almacenados en la Cola,         -
+ 142          //-                                     Inicializa el Puntero para la Entrada de Datos a la Cola,       -
+ 143          //-                                     Inicializa el Puntero para la Salida de Datos de la Cola.       -
+ 144          //--------------------------------------------------------------------------------- */
+ 145          void InicializarColaTransmision0(void)
+ 146          {
+*** ERROR C231 IN LINE 146 OF FUNCIONES_COLAS_PSERIE0.C: 'InicializarColaTransmision0': redefinition
+ 147   1              uint32_t i;
+ 148   1      
+ 149   1              UART0.TX.CantidadCola = 0;              // Inicializo Contador de Datos Almacenados
+ 150   1              UART0.TX.EntradaCola = 0;               // Inicializo el Puntero para la Entrada de Datos
+ 151   1              UART0.TX.SalidaCola = 0;                // Inicializo el Puntero para la Salida de Datos
+ 152   1      
+ 153   1              for( i = 0 ; i < LONG_COLA_TX0 ; i++)
+ 154   1                      UART0.TX.Cola[i] = 0;
+ 155   1      }
+*** ERROR C231 IN LINE 155 OF FUNCIONES_COLAS_PSERIE0.C: 'InicializarColaTransmision0': redefinition
+ 156          
+ 157          //---------------------------------------------------------------------------------
+ 158          //-     Funci�n:      unsigned char CantidadEnColaTransmision (void);                                 -
+ 159          //---------------------------------------------------------------------------------
+ 160          //-     Devuelve:       la cantidad de datos almacenados en la cola de TX.                              -
+ 161          //--------------------------------------------------------------------------------- */
+ 162          uint8_t CantidadEnColaTransmision0(void)
+ 163          {
+ 164   1          return (UART0.TX.CantidadCola);                     // Retorno Contador de Datos Almacenados en la Cola
+ 165   1      }
+ 166          //---------------------------------------------------------------------------------
+ 167          //-     Funcion:        unsigned char AgregarDatoColaTransmision (uchar dato)                   -
+ 168          //---------------------------------------------------------------------------------
+ 169          //-     Accion:         Almacena el Dato recibido en la cola de TX.                                             -
+ 170          //-                             Incrementa el Contador de Datos Almacenados en la Cola,                 -
+ 171          //-                             actualiza el Puntero de Ingreso de Datos a la Cola.                             -
+ 172          //-     Recibe:         Dato a almacenar                                                                                                -
+ 173          //-     Devuelve:       OK                      Si no hubo problemas                                                                    -
+C51 COMPILER V8.05a   FUNCIONES_COLAS_PSERIE0                                              11/17/2012 15:18:25 PAGE 4   
+
+ 174          //-                             ERROR           Si la cola estaba llena                                                         -
+ 175          //--------------------------------------------------------------------------------- */
+ 176          uint8_t AgregarDatoColaTransmision0(uint8_t dato)
+ 177          {       
+ 178   1              if(UART0.TX.CantidadCola >= LONG_COLA_TX0)                      // Verifico si la Cola No esta Llena
+ 179   1              {
+ 180   2                      return (ERROR_COLA_TX_LLENA);
+ 181   2              }
+ 182   1                      
+ 183   1                      UART0.TX.Cola[UART0.TX.EntradaCola] = dato;                     // Almaceno el Dato en la Cola
+ 184   1                      UART0.TX.EntradaCola++;
+ 185   1              
+ 186   1                      UART0.TX.CantidadCola ++;                                                       // Incremento Contador de Datos Almacenados en la Cola
+ 187   1      
+ 188   1                      if (UART0.TX.EntradaCola >= LONG_COLA_TX0)
+ 189   1                              UART0.TX.EntradaCola = 0;
+ 190   1                      
+ 191   1                      if (UART0.TX.TxEnCurso == 0)                                            // Verifico si NO Hay Transmision en Curso
+ 192   1                      {
+ 193   2                      RI0 = 0;
+ 194   2                      SBUF0 = RetirarDatoColaTransmision0();
+ 195   2                              UART0.TX.TxEnCurso = 1;
+ 196   2                      }
+ 197   1                      
+ 198   1                      return (OK);                                                                            // Retorno Exito
+ 199   1              
+ 200   1      }
+ 201          
+ 202          //---------------------------------------------------------------------------------
+ 203          //-     Funcion:        uint8_t RetirarDatoColaTransmision (void)                               -
+ 204          //---------------------------------------------------------------------------------
+ 205          //-     Accion:         Recupera un dato de la cola de TX.                                                              -
+ 206          //-                             Decrementa el Contador de Datos Almacenados en la Cola,                 -
+ 207          //-                             actualiza el puntero de egreso de datos de la cola.                             -
+ 208          //-     Recibe:         void.                                                           -
+ 209          //-     Devuelve:       OK                      Si no hubo problemas                                                            -
+ 210          //-                             ERROR           Si la cola estaba vacia                                                         -
+ 211          //--------------------------------------------------------------------------------- */
+ 212          uint8_t RetirarDatoColaTransmision0 (void)
+ 213          {
+ 214   1              uint8_t dato;
+ 215   1      
+ 216   1              if(UART0.TX.CantidadCola == 0)                          // Verifico si la Cola esta Vacia
+ 217   1              {
+ 218   2                      return (ERROR_COLA_TX_VACIA);
+ 219   2              }
+ 220   1                      dato = UART0.TX.Cola[UART0.TX.SalidaCola];      // Recupero el Dato de la Cola
+ 221   1                      UART0.TX.SalidaCola++;
+ 222   1      
+ 223   1                      UART0.TX.CantidadCola --;                                       // Decremento Contador de Datos Almacenados en la Cola
+ 224   1      
+ 225   1                      if (UART0.TX.SalidaCola >= LONG_COLA_TX0)
+ 226   1                              UART0.TX.SalidaCola = 0;
+ 227   1              
+ 228   1                      return dato;    
+ 229   1              
+ 230   1      }
+ 231          
+ 232          //---------------------------------------------------------------------------------
+ 233          //-     Funcion:        void UART_Handler (void)                                -
+ 234          //---------------------------------------------------------------------------------
+ 235          //-     Accion:         Funcion interrupcion de la UART                         -
+C51 COMPILER V8.05a   FUNCIONES_COLAS_PSERIE0                                              11/17/2012 15:18:25 PAGE 5   
+
+ 236          //-     Recibe:         void                                                    -
+ 237          //-     Devuelve:       void                                                    -
+ 238          //--------------------------------------------------------------------------------- */
+ 239          void UART_Handler(void) interrupt 4
+ 240          {
+ 241   1          if(RI0)
+ 242   1          {
+ 243   2              RI0 = 0;
+ 244   2      
+ 245   2              AgregarDatoColaRecepcion0(SBUF0);
+ 246   2          }
+ 247   1          else
+ 248   1          {
+ 249   2              if(SCON0 & 0x02)
+ 250   2              {       SCON0 &= ~0x02;
+ 251   3                  
+ 252   3      
+ 253   3                  if(CantidadEnColaTransmision0()!=0)
+ 254   3                      SBUF0 = RetirarDatoColaTransmision0();
+ 255   3                              
+ 256   3              }
+ 257   2          }
+ 258   1      }
+ 259          
+ 260            
+ 261                                                                                   
+
+C51 COMPILATION COMPLETE.  2 WARNING(S),  4 ERROR(S)
